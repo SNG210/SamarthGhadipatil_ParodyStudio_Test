@@ -52,7 +52,10 @@ public class PlayerMovement : MonoBehaviour
     {      
         isMoving = verticalInput != 0 || horizontalInput != 0;
 
-        return Vector3.ProjectOnPlane((cam.forward * verticalInput + cam.right * horizontalInput).normalized, GetSurfaceNormal());
+        Vector3 forward = Vector3.ProjectOnPlane(cam.forward, GetSurfaceNormal());
+        Vector3 right = Vector3.ProjectOnPlane(cam.right, GetSurfaceNormal());
+
+        return Vector3.ProjectOnPlane((forward * verticalInput + right * horizontalInput).normalized, GetSurfaceNormal());
 
     }
 
