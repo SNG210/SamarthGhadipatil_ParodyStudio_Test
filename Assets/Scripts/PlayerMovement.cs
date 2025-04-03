@@ -13,16 +13,21 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 5f;
     public float groundCheckRadius = 0.2f;
     public float gravityStrength = 9.81f;
+    public float rotationSpeed = 10;
 
     private Rigidbody rb;
-    private Vector3 moveDirection;
     public bool isGrounded;
     public bool isMoving;
+
+    float verticalInput;
+    float horizontalInput;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void OnDisable()
@@ -33,8 +38,8 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         CheckGrounded();
-        ProcessInput();
-        RotatePlayer();
+        HandleRotation();
+        InputAxis();
     }
 
     private void FixedUpdate()
@@ -43,15 +48,18 @@ public class PlayerMovement : MonoBehaviour
         ApplyGravity();
     }
 
-    private void ProcessInput()
-    {
-        float verticalInput = Input.GetAxisRaw("Vertical");
-        float horizontalInput = Input.GetAxisRaw("Horizontal");
+    private Vector3 MoveDirection()
+    {      
         isMoving = verticalInput != 0 || horizontalInput != 0;
 
-        Vector3 forward = Vector3.ProjectOnPlane(cam.forward, GetSurfaceNormal()).normalized;
-        Vector3 right = Vector3.ProjectOnPlane(cam.right, GetSurfaceNormal()).normalized;
-        moveDirection = (forward * verticalInput + right * horizontalInput).normalized;
+        return Vector3.ProjectOnPlane((cam.forward * verticalInput + cam.right * horizontalInput).normalized, GetSurfaceNormal());
+
+    }
+
+    private void InputAxis()
+    {
+         verticalInput = Input.GetAxisRaw("Vertical");
+         horizontalInput = Input.GetAxisRaw("Horizontal");
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
@@ -61,9 +69,20 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        Vector3 gravityDirection = -GetSurfaceNormal();
-        Vector3 moveVelocity = Vector3.ProjectOnPlane(moveDirection * moveSpeed, gravityDirection);
-        rb.velocity = moveVelocity + Vector3.Project(rb.velocity, gravityDirection);
+        rb.velocity = MoveDirection() * moveSpeed + Vector3.Project(rb.velocity, GetSurfaceNormal()) ;
+    }
+
+    private 
+
+    void HandleRotation()
+    {
+        Vector3 targetDirection = MoveDirection();
+
+        if (targetDirection.magnitude > 0.1f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection, GetSurfaceNormal());
+            orientation.rotation = Quaternion.Slerp(orientation.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        }
     }
 
     private void ApplyGravity()
@@ -74,19 +93,6 @@ public class PlayerMovement : MonoBehaviour
     private void Jump()
     {
         rb.AddForce(GetSurfaceNormal() * jumpForce, ForceMode.Impulse);
-    }
-
-    private void RotatePlayer()
-    {
-        if (isMoving)
-        {
-            Vector3 velocityDirection = Vector3.ProjectOnPlane(rb.velocity, -GetSurfaceNormal());
-            if (velocityDirection.magnitude > 0.1f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(velocityDirection, transform.up);
-                orientation.rotation = Quaternion.Slerp(orientation.rotation, targetRotation, Time.deltaTime * 10f);
-            }
-        }
     }
 
     private void CheckGrounded()

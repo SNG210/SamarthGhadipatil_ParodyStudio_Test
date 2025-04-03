@@ -128,7 +128,6 @@ public enum RotationStates
     Front,
     Right,
     Left,
-    Default
 }
 
 
