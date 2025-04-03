@@ -7,7 +7,9 @@ public class GravityManager : MonoBehaviour
     public MonoBehaviour playerMovementScript; 
     public float rotationDuration = 0.5f; 
 
-    private RotationStates currentRotationState = RotationStates.Back;
+    public bool canRotate = false;  
+
+    [SerializeField] private RotationStates currentRotationState = RotationStates.Back;
 
     void Start()
     {
@@ -35,10 +37,12 @@ public class GravityManager : MonoBehaviour
         {
             ShowHologram(RotationStates.Left);
         }
-        else if (Input.GetKeyDown(KeyCode.Return)) 
+        else if (Input.GetKeyDown(KeyCode.Return) && canRotate) 
         {
             StartRotationSequence();
         }
+
+        ValidateRotate();
     }
 
     void ShowHologram(RotationStates newState)
@@ -111,6 +115,11 @@ public class GravityManager : MonoBehaviour
             _ => Vector3.zero
         };
     }
+
+    void ValidateRotate()
+    {
+        canRotate = hologram.gameObject.activeSelf;
+    }
 }
 
 public enum RotationStates
@@ -118,5 +127,8 @@ public enum RotationStates
     Back,
     Front,
     Right,
-    Left
+    Left,
+    Default
 }
+
+
